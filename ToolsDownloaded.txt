@@ -1,0 +1,56 @@
+Based on those commands, you installed:
+
+Debuggers
+
+GDB
+Native debugger for stepping through programs, breakpoints, registers, memory.
+
+LLDB
+Modern debugger from LLVM, similar to GDB.
+
+
+
+---
+
+Network analysis
+
+tcpdump
+Captures network packets for protocol analysis.
+
+
+
+---
+
+Reverse engineering
+
+radare2
+Disassembler, debugger, patcher, binary analysis toolkit.
+
+
+
+---
+
+Binary utilities (binutils)
+
+This package usually gives:
+
+objdump → disassemble binaries
+
+strings → extract text strings
+
+nm → symbol tables
+
+readelf → inspect ELF binaries
+
+addr2line
+
+ar
+
+strip
+
+objcopy
+
+
+
+---
+

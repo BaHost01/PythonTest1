@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.gemini/
+original_project/
+1.0.2/
+1.0.3/
+*.zip
+live_offsets.txt
+decryptor.hpp
+*.patched
