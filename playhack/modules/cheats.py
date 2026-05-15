@@ -47,6 +47,10 @@ class Cheats:
         # Since we are external, we'll just scan for a common monster property.
         pass
 
+    def set_jump_force(self, value):
+        if not self.update_local_player(): return
+        self.mem.write(self.p_local + Offsets.JUMP_FORCE, struct.pack('f', value))
+
 def run_cheat(command, value=None):
     cheats = Cheats()
     if not cheats.mem.pid:
@@ -61,6 +65,10 @@ def run_cheat(command, value=None):
         val = float(value)
         cheats.set_speed(val, val * 1.5)
         print(f"[*] Speed set to: {val}")
+    elif command == "jump":
+        val = float(value)
+        cheats.set_jump_force(val)
+        print(f"[*] Jump Force set to: {val}")
     elif command == "reach":
         enabled = value.lower() == "on"
         cheats.set_infinite_reach(enabled)

@@ -28,6 +28,9 @@ def main():
     speed_p = subparsers.add_parser("speed", help="Set Player Speed")
     speed_p.add_argument("value", type=float)
 
+    jump_p = subparsers.add_parser("jump", help="Set Jump Force")
+    jump_p.add_argument("value", type=float)
+
     # Crypto
     cry_p = subparsers.add_parser("crypto", help="Offset obfuscation")
     cry_p.add_argument("input", help="Input file")

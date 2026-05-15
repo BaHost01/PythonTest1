@@ -28,7 +28,8 @@ class ESP:
     def get_player_data(self):
         data = []
         for addr in self.players:
-            is_dead = struct.unpack('?', self.mem.read(addr + Offsets.IS_DEAD, 1))[0] if self.mem.read(addr + Offsets.IS_DEAD, 1) else True
+            is_dead_raw = self.mem.read(addr + Offsets.IS_DEAD, 1)
+            is_dead = struct.unpack('?', is_dead_raw)[0] if is_dead_raw else True
             
             # Position chain
             trans_ptr = self.mem.read_ptr(addr + Offsets.TRANSFORM)
@@ -39,7 +40,8 @@ class ESP:
             data.append({
                 "address": hex(addr),
                 "state": "[red]DEAD[/red]" if is_dead else "[green]ALIVE[/green]",
-                "pos": f"({x:>7.2f}, {y:>7.2f}, {z:>7.2f})"
+                "pos_str": f"({x:>7.2f}, {y:>7.2f}, {z:>7.2f})",
+                "x": x, "y": y, "z": z
             })
         return data
 
@@ -50,28 +52,33 @@ def generate_table(esp_data) -> Table:
     table.add_column("Position (X, Y, Z)", justify="left")
 
     for i, p in enumerate(esp_data):
-        table.add_row(str(i), p['state'], p['pos'])
+        table.add_row(str(i), p['state'], p['pos_str'])
     return table
 
 def generate_radar(esp_data) -> Panel:
-    size = 15 # Radar size
+    size = 15 # Radar grid size
     grid = [[" " for _ in range(size)] for _ in range(size)]
     center = size // 2
     grid[center][center] = "[blue]@[/blue]" # Local Player
 
-    # Assume the first player in the list is the local one for relative pos
-    if esp_data:
-        # We need raw floats for radar, but esp_data has strings. 
-        # In a real tool, we'd pass raw data. Let's simulate for now.
-        for i, p in enumerate(esp_data[1:]): # Other players
-            # Dummy mapping for demo
-            # In real: x_rel = (p.x - local.x) / scale
-            rel_x = (i * 2 + 1) % size
-            rel_z = (i * 3 + 2) % size
-            grid[rel_z][rel_x] = "[red]X[/red]"
+    if len(esp_data) > 1:
+        local = esp_data[0]
+        scale = 5.0 # Units per grid cell
+        for p in esp_data[1:]:
+            # Relative coordinates
+            dx = (p['x'] - local['x']) / scale
+            dz = (p['z'] - local['z']) / scale
+            
+            # Map to grid
+            gx = int(center + dx)
+            gz = int(center - dz) # Invert Z for top-down map
+            
+            if 0 <= gx < size and 0 <= gz < size:
+                if grid[gz][gx] == " ":
+                    grid[gz][gx] = "[red]X[/red]"
 
     radar_text = "\n".join([" ".join(row) for row in grid])
-    return Panel(radar_text, title="[bold green]Top-Down Radar[/bold green]", border_style="green", padding=(1, 2))
+    return Panel(radar_text, title="[bold green]Radar (Scale: 5.0)[/bold green]", border_style="green", padding=(1, 2))
 
 def generate_layout() -> Layout:
     layout = Layout()
@@ -102,9 +109,9 @@ def run(target):
     if not esp.mem.pid:
         console.print(f"[bold red][!] Target {target} not found. Simulation mode active.[/bold red]")
         sim_data = [
-            {"address": "0x7F1000A0", "state": "[green]ALIVE[/green]", "pos": "( 10.50,   5.20, -15.10)"},
-            {"address": "0x7F1004B0", "state": "[red]DEAD[/red]", "pos": "(-22.10,   1.00,  45.00)"},
-            {"address": "0x7F1008C0", "state": "[green]ALIVE[/green]", "pos": "(  5.00,   2.10,   8.00)"}
+            {"address": "0x7F1000A0", "state": "[green]ALIVE[/green]", "pos_str": "(  0.00,   0.00,   0.00)", "x": 0.0, "y": 0.0, "z": 0.0},
+            {"address": "0x7F1004B0", "state": "[red]DEAD[/red]", "pos_str": "(-10.00,   1.00,  15.00)", "x": -10.0, "y": 1.0, "z": 15.0},
+            {"address": "0x7F1008C0", "state": "[green]ALIVE[/green]", "pos_str": "( 20.00,   2.10, -10.00)", "x": 20.0, "y": 2.1, "z": -10.0}
         ]
         cheats_data = {'god': False, 'reach': False}
         with Live(layout, refresh_per_second=4) as live:
